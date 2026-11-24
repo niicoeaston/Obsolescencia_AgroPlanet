@@ -2383,7 +2383,7 @@ function aniosAperturadosDeTexto(anioTexto){
 let COT_OCUPADA = false;
 function cotMarca(){ return (D.cotizacion && D.cotizacion.marca) || 'agroplanet'; }
 
-/* Revisa la selección ANTES de generar: disponibilidad, precio, cantidades y responsable de cada zona. Devuelve los grupos por zona. */
+/* Revisa la selección ANTES de generar: disponibilidad, precio y cantidades. Devuelve los grupos por zona. */
 function cotPrepararSeleccion(){
   const errores = [];
   const lineas = SELECCION.lineas;
@@ -2402,13 +2402,8 @@ function cotPrepararSeleccion(){
     if (!grupos.has(l.zona)) grupos.set(l.zona, []);
     grupos.get(l.zona).push(l);
   }
-  const resp = D.responsables || {};
   const resultado = [];
-  for (const [zona, ls] of grupos){
-    const responsable = resp[zona];
-    if (!responsable) errores.push(`Falta definir el responsable de la zona «${zona}» en la base de productos (columna Supervisor/Zonal, un solo nombre por zona).`);
-    resultado.push({zona, responsable, lineas: ls});
-  }
+  for (const [zona, ls] of grupos) resultado.push({zona, lineas: ls});
   return {grupos: resultado, errores};
 }
 
@@ -2431,7 +2426,7 @@ async function exportarSeleccionPDF(){
     for (const g of prep.grupos){
       const ahora = Date.now();
       await CotizacionObsolescencias.descargarPDF({
-        marca: cotMarca(), zona: g.zona, responsable: g.responsable,
+        marca: cotMarca(), zona: g.zona, responsable: '',   // el responsable queda en blanco: se completa a mano
         emitidaEn: new Date(ahora).toISOString(), venceEn: new Date(ahora + 72 * 3600 * 1000).toISOString(),
         items: g.lineas.map(l => ({sku: String(l.material), descripcion: String(l.texto || '').trim(), cantidad: l.cantidad, precioUnitario: l.precioCapturado, zona: g.zona})),
       });
